@@ -18,7 +18,9 @@ def load_data(datapath, filename):
 	pickle.dump(userMap, open(datapath + "/" + "userMap", "wb"))
 	pickle.dump(res, open(datapath + "/" + "mat", "wb"))
 	pickle.dump(data, open(datapath + "/" + "movie_ratings_nudged", "wb"))
-
+	
+def calc_loss(true, pred):
+    return (true - pred) ** 2
 
 if __name__ == "__main__":
 	load_data("/media/zzhuang/00091EA2000FB1D0/iGit/git_projects/RecommendML/data", "movie_ratings.csv")

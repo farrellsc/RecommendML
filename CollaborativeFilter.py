@@ -1,7 +1,8 @@
 import numpy as np
-import tqdm
+from numpy import genfromtxt
+
 from utils import calc_loss
-from dataProcessor import myDataset, CVdataloader
+from dataProcessor import myDataset
 
 
 class CollaborativeFilter:
@@ -18,17 +19,8 @@ class CollaborativeFilter:
         input: train dataset
         return: loss history by epoch as a list
         """
-        loss_history = []		# avg loss of all samples for each epoch
-        for i in tqdm.tqdm_notebook(range(self.epoch)):
-            preds = []
-            for batch_ind, (userInd, movieInd, rating) in enumerate(dataset):
-                userInd, movieInd = int(userInd), int(movieInd)
-                pred = self.predict()	# TODO
-                preds.append(pred)
-                #-----------------------------optimize function here--------------------------------
 
-            loss_history.append(calc_loss(dataset.getY().flatten(), np.array(preds)).sum() / len(dataset))
-        return loss_history
+        return None
                     
     def predict(self) -> float:
         """
@@ -48,3 +40,27 @@ class CollaborativeFilter:
             pred = self.predict()		# TODO
             loss_sum += calc_loss(rating, pred)
         return loss_sum / len(dataset)
+
+    def read_data(csv_dir):
+        """
+
+        :param csv_dir: csv_dir = "data/movie_ratings.csv"
+        :return: numpy matrix
+        """
+        my_data = genfromtxt(csv_dir, delimiter=",", skip_header=1)
+        users_count = int(max(my_data[:, 0]))
+        items_count = int(max(my_data[:, 1]))
+
+        ratings_matrix = np.zeros([users_count, items_count])
+
+        # note that we minus 1 on each index
+        ratings_matrix[int(my_data[i, 0]) - 1, int(my_data[i, 1]) - 1] = my_data[i, 2]
+
+        return ratings_matrix
+
+
+
+
+if __name__ == "__main__":
+    pass
+

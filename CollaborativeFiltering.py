@@ -14,6 +14,7 @@ class CollaborativeFiltering(object):
         self.k = k # use the most similar k neighbors
         self.users_count = userNum
         self.items_count = movieNum
+        self.default_rating = None
     
     def train(self, trainData):
         """
@@ -27,6 +28,9 @@ class CollaborativeFiltering(object):
         if 1:
             self.similarity_matrix = self.compute_users_similarity_matrix(self.rating_matrix)
             np.save("data/user_similarity_matrix", self.similarity_matrix)
+
+        non_zero_rating_indices = np.where(self.rating_matrix != 0)
+        self.default_rating = np.sum(self.rating_matrix) / (non_zero_rating_indices[0] * non_zero_rating_indices[1])
                     
     def predict(self, userID, itemID) -> float:
         """
@@ -116,7 +120,7 @@ class CollaborativeFiltering(object):
 
 
 if __name__ == "__main__":
-    rec = CollaborativeFiltering(k=5)
+    rec = CollaborativeFiltering(5, 610, 9724)
     rec.train("data/movie_ratings.csv")
     for i in range(1000):
         for j in range(1000):

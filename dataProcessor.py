@@ -41,6 +41,38 @@ class CVdataloader:
             trainData = np.vstack([self.data[0:self.seperates[i], :], self.data[self.seperates[i+1]:, :]])
             yield myDataset(trainData), myDataset(testData)
 
-class hehe:
-    def __init__(self):
-        pass
+
+class NewUserLoader:
+    def __init__(self, cv, datapath, filename, thresRatio):
+        self.cv = cv
+        self.datapath = datapath
+        self.filename = filename
+        self.data = pickle.load(open(datapath + "/" + filename, "rb"))[:, :-1]
+        np.random.shuffle(self.data)
+        self.userNum = len(np.unique(self.data[:, 0]))
+        self.movieNum = len(np.unique(self.data[:, 1]))
+        self.thres = int(self.userNum * thresRatio)
+        
+    def getTrain(self):
+        return myDataset(self.data[self.data[:,0] <= self.thres])
+
+    def getTest(self):
+        return myDataset(self.data[self.data[:,0] > self.thres])
+
+
+class NewItemLoader:
+    def __init__(self, cv, datapath, filename, thresRatio):
+        self.cv = cv
+        self.datapath = datapath
+        self.filename = filename
+        self.data = pickle.load(open(datapath + "/" + filename, "rb"))[:, :-1]
+        np.random.shuffle(self.data)
+        self.userNum = len(np.unique(self.data[:, 0]))
+        self.movieNum = len(np.unique(self.data[:, 1]))
+        self.thres = int(self.movieNum * thresRatio)
+        
+    def getTrain(self):
+        return myDataset(self.data[self.data[:,1] <= self.thres])
+
+    def getTest(self):
+        return myDataset(self.data[self.data[:,1] > self.thres])

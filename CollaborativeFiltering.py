@@ -8,21 +8,23 @@ import os.path
 
 class CollaborativeFiltering(object):
 
-    def __init__(self, k=10):
+    def __init__(self, k, userNum, movieNum):
         self.similarity_matrix = None
         self.rating_matrix = None
         self.k = k # use the most similar k neighbors
+        self.users_count = userNum
+        self.items_count = movieNum
     
-    def train(self, csv_file):
+    def train(self, trainData):
         """
         input: csv_file
         return: loss history by epoch as a list
         """
-        self.rating_matrix = self.read_data(csv_file)
+        self.rating_matrix = self.read_data(trainData)
         # Computing similarity matrix is time-consuming. We load it if we have already computed.
         if os.path.isfile("data/user_similarity_matrix.npy"):
             self.similarity_matrix = np.load("data/user_similarity_matrix.npy")
-        else:
+        if 1:
             self.similarity_matrix = self.compute_users_similarity_matrix(self.rating_matrix)
             np.save("data/user_similarity_matrix", self.similarity_matrix)
                     
@@ -32,10 +34,6 @@ class CollaborativeFiltering(object):
         both IDs' indices starts from 1.
         return: pred_rating
         """
-
-        # index of our arrays starts from 0 so we need to minus 1.
-        userID = userID - 1
-        itemID = itemID - 1
 
         # find userID who also rated itemID
         other_userIDs = np.where(self.rating_matrix[:, itemID] != 0)[0]
@@ -66,7 +64,7 @@ class CollaborativeFiltering(object):
         output: loss avg on current test set
         """
         loss_sum = 0
-        for userInd, movieInd, rating in dataset:
+        for ind, (userInd, movieInd, rating) in enumerate(dataset):
             userInd, movieInd = int(userInd), int(movieInd)
             pred = self.predict(userInd, movieInd)		# TODO
             loss_sum += calc_loss(rating, pred)
@@ -102,21 +100,17 @@ class CollaborativeFiltering(object):
 
         return pearson_similarity_matrix
 
-    def read_data(self, csv_dir):
+    def read_data(self, train_data):
         """
 
         :param csv_dir: csv_dir = "data/movie_ratings.csv"
         :return: numpy matrix
         """
-        my_data = genfromtxt(csv_dir, delimiter=",", skip_header=1)
-        users_count = int(max(my_data[:, 0]))
-        items_count = int(max(my_data[:, 1]))
+        ratings_matrix = np.zeros([self.users_count, self.items_count])
 
-        ratings_matrix = np.zeros([users_count, items_count])
-
-        for i in range(my_data.shape[0]):
+        for userid, itemid, rating in train_data:
             # note that we minus 1 on each index
-            ratings_matrix[int(my_data[i, 0]) - 1, int(my_data[i, 1]) - 1] = my_data[i, 2]
+            ratings_matrix[int(userid), int(itemid)] = rating
 
         return ratings_matrix
 

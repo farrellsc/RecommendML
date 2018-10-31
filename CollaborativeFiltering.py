@@ -28,9 +28,6 @@ class CollaborativeFiltering(object):
         if 1:
             self.similarity_matrix = self.compute_users_similarity_matrix(self.rating_matrix)
             np.save("data/user_similarity_matrix", self.similarity_matrix)
-
-        non_zero_rating_indices = np.where(self.rating_matrix != 0)
-        self.default_rating = np.sum(self.rating_matrix) / (non_zero_rating_indices[0] * non_zero_rating_indices[1])
                     
     def predict(self, userID, itemID) -> float:
         """
@@ -46,7 +43,7 @@ class CollaborativeFiltering(object):
         other_userIDs_v_similarity = [[id, self.similarity_matrix[userID, id]]
                                       for id in other_userIDs if self.similarity_matrix[userID, id] > 0 and id != userID]
         if len(other_userIDs_v_similarity) == 0:
-            return 3 # if no data for this prediction, return 3 as a guess
+            return 3.5 # if no data for this prediction, return 3 as a guess
 
         other_userIDs_v_similarity.sort(key=lambda x:x[1], reverse=True)
         neighbors_count = self.k if len(other_userIDs_v_similarity) > self.k else len(other_userIDs_v_similarity)

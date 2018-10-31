@@ -11,7 +11,7 @@ class CollaborativeFiltering(object):
     def __init__(self, k=10):
         self.similarity_matrix = None
         self.rating_matrix = None
-        self.k = 10 # use the most similar k neighbors
+        self.k = k # use the most similar k neighbors
     
     def train(self, csv_file):
         """
@@ -24,26 +24,45 @@ class CollaborativeFiltering(object):
             self.similarity_matrix = np.load("data/user_similarity_matrix.npy")
         else:
             self.similarity_matrix = self.compute_users_similarity_matrix(self.rating_matrix)
-            pass
+            np.save("data/user_similarity_matrix", self.similarity_matrix)
                     
     def predict(self, userID, itemID) -> float:
         """
         make prediction for one sample
+        both IDs' indices starts from 1.
         return: pred_rating
         """
+
+        # index of our arrays starts from 0 so we need to minus 1.
+        userID = userID - 1
+        itemID = itemID - 1
+
         # find userID who also rated itemID
         other_userIDs = np.where(self.rating_matrix[:, itemID] != 0)[0]
 
+
+
+
         # find top K similar users
-        users_similarity = self.similarity_matrix[[userID] * len(other_userIDs), other_userIDs]
-        similar_users_IDs = np.argpartition(users_similarity, -self.k)[-self.k:]
-        print(np.sort(users_similarity))
-        print(users_similarity[similar_users_IDs]) # TODO
+        other_userIDs_v_similarity = [[id, self.similarity_matrix[userID, id]]
+                                      for id in other_userIDs if self.similarity_matrix[userID, id] > 0 and id != userID]
+        if len(other_userIDs_v_similarity) == 0:
+            return 3 # if no data for this prediction, return 3 as a guess
+
+        other_userIDs_v_similarity.sort(key=lambda x:x[1], reverse=True)
+        neighbors_count = self.k if len(other_userIDs_v_similarity) > self.k else len(other_userIDs_v_similarity)
+        similar_usersIDs_v_similarity = other_userIDs_v_similarity[:neighbors_count]
+        similar_usersIDs_v_similarity_tranposed = list(map(list, zip(*similar_usersIDs_v_similarity))) # tranpose similar_usersIDs_v_similarity
         # predict
+        denominator = sum(similar_usersIDs_v_similarity_tranposed[1])
+        if denominator > 0:
+            pred_rating = np.dot(np.array(similar_usersIDs_v_similarity_tranposed[1]), self.rating_matrix[np.array(similar_usersIDs_v_similarity_tranposed[0]), itemID]) / denominator
+        else:
+            print("denominator is zero")
+            return 0
 
+        return pred_rating
 
-        raise NotImplementedError
-    
     def evaluate(self, dataset: myDataset) -> float:
         """
         input: test dataset
@@ -52,10 +71,9 @@ class CollaborativeFiltering(object):
         loss_sum = 0
         for userInd, movieInd, rating in dataset:
             userInd, movieInd = int(userInd), int(movieInd)
-            pred = self.predict()		# TODO
+            pred = self.predict(userInd, movieInd)		# TODO
             loss_sum += calc_loss(rating, pred)
         return loss_sum / len(dataset)
-
 
     def compute_items_similarity_matrix(self, data):
 
@@ -107,7 +125,11 @@ class CollaborativeFiltering(object):
 
 
 if __name__ == "__main__":
-    rec = CollaborativeFiltering(10)
+    rec = CollaborativeFiltering(k=5)
     rec.train("data/movie_ratings.csv")
-    rec.predict(0, 1)
-
+    for i in range(1000):
+        for j in range(1000):
+            # rec.predict(5, 21)
+            # print("\n")
+            print(i, j, rec.predict(i, j))
+            pass

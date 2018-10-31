@@ -40,9 +40,6 @@ class CollaborativeFiltering(object):
         # find userID who also rated itemID
         other_userIDs = np.where(self.rating_matrix[:, itemID] != 0)[0]
 
-
-
-
         # find top K similar users
         other_userIDs_v_similarity = [[id, self.similarity_matrix[userID, id]]
                                       for id in other_userIDs if self.similarity_matrix[userID, id] > 0 and id != userID]
@@ -129,7 +126,4 @@ if __name__ == "__main__":
     rec.train("data/movie_ratings.csv")
     for i in range(1000):
         for j in range(1000):
-            # rec.predict(5, 21)
-            # print("\n")
             print(i, j, rec.predict(i, j))
-            pass
